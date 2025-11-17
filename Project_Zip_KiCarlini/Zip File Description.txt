@@ -1,0 +1,19 @@
+Zip File Description:
+
+This file contains the following:
+
+Data/
+	ReadMe: txt file containing data details and link to data source
+	Beach_vs_Mountains.csv: The xlsx for the data set used 
+
+Proposal/
+	Project_Proposal_KimberlyC: Proposal for the project
+
+Project/
+	Mountains_vs_Beach_KimberlyC.Rmd: R file containing a project report on the dataset above
+	Mountains_vs_Beach_KimberlyC.nb.html: html version of the above R file
+
+Presentation/
+	Beach_vs_Mountains_Preference: PowerPoint presentation to accompany report
+
+

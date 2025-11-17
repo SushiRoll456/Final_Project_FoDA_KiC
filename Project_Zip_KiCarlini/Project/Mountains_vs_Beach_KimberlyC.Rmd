@@ -1,0 +1,331 @@
+---
+title: "Beach vs. Mountains Preference"
+output: html_notebook
+author: "Kimberly Carlini"
+---
+
+# Introduction
+> Over the course of analyzing this data my main goal has evolved as I learned more about data and methods used to create synthetic datasets. Originally, I was confused about what could be found from a synthetic dataset that was so evenly distributed and looked to be very random. However as I got more into the data I found that by visualizing the data I could find that some variables did affect the end preference. This was huge. The main goal of this project is not to make insights that reflect the real world rather look closer into this dataset and essentially disect it to demonstrate the importance of data analytics. 
+
+# Summary
+> For this project I will be finding what variables affect the end descion of preference over the beach or the mountains by using data vizualizations. By using graphs like barcharts we can see what part of each category chose one location vs. another which will allow us to find where the preference varies between categories/ ranges within a variable. We will also look at what clues we can find that signals that the data is synthetic rather than real data along with how the dataset may have been made. Then using the information we find we will be able to see what factors will lead to a preference towards the mountains in this dataset. 
+
+# Purpose
+> The main goal of the project is to essentially discect the dataset and find what variables affect the choice between the beach and the mountains as well as find out how this dataset was synthetically made and how we can tell it is synthetic. An important question to be answered is why is the preference so skewed towards the beach and what potential methods were used to create what we find. 
+
+## Libraries used
+```{r}
+# libraries
+library(dplyr) 
+library(tidyverse)
+library(ggplot2)
+library(correlation)
+
+```
+
+
+```{r}
+# Loading in the data set
+Beach_vs_mountain <- read.csv("mountains_vs_beaches_preferences.csv")
+head(Beach_vs_mountain)
+```
+
+
+# Data
+> due to this data being synthetic it allowed the designer to not include any NA values or inconsistent values which so far has made working with it very nice. Because of this I am able to simply use the dataset as it is. Below I have included a data dictionary to have proper descriptions of each variable, the dimensions so we know what we are working with, As well as a description of summary statistics which will give us a good starting point by giving us a closer look at each variable. 
+
+```{r}
+# Dictionary of the features of the data set including: variable name, what that variable is representing, and if its numerical or categorical.
+
+dictionary <- data.frame(
+  variable_name = c("Age", "Gender", "Income", "Education_Level", "Travel_Frequency", "Preferred_Activities", "Vacation_Budget", "Location", "Proximity_to_Mountains", "Proximity_to_Beaches", "Favorite_Season", "Pets", "Environmental_Concerns", "Preference"),
+  representing = c("Respondent's age", "Respondent's gender", "Respondent's Income", "Respondent's level of education", "Respondent's frequency of travel", "Respondent's preferred activity", "Respondent's vacation budget ($)", "What type of area they live in", "Distance from mountains (mi)", "distance from beaches (mi)", "Respondent's favorite season", "Y/N if they have a pet", "Y/N if they are concerned with the enviroment", "The respondent's choice of preference between beaches vs mountains"),
+  Numerical_or_Catagorical = c("N", "C", "N", "C", "N", "C", "N", "C", "N", "N", "C", "C", "C", "C")
+)
+
+dictionary
+
+```
+
+```{r}
+# Dimensions
+dim(Beach_vs_mountain)
+```
+
+```{r}
+#Summary Statistics of features
+summary(Beach_vs_mountain)
+
+```
+## Description of summary statistics:
+Age: We can see that the age range is between 18 and 69 with the mean and the median being about the same telling us that it has a uniform distribution.
+
+Gender: Though it is a character value from the graphs below we can see that gender is equally distributed.
+
+Income: The range is between 20001 and 119999 with the mean and median being very close.
+
+Education Level: From the graphs we can see that it is uniformly distributed.
+
+Travel Frequency: min = 0, max = 9, the mean and median hint at it being a uniform distribution.
+
+Preferred Activities: Equally Distributed between all four categories
+
+...
+
+All except the Preference column are uniformly distributed for the most part.
+
+# Exploratory Data Analysis
+> Here we are using visualizations to explore how the variables relate to eachother as well as what affects a persons preference. I made visualizations that showed the count of each category within each variable and showed the percentage of preference among each category or range in each variable to see if there was any difference within each variable. We will also see if other variables relate to other variables via correlation matrix and bar charts. From this we will also be able to compare the data to what it might look like if it were not synthetic and why.
+
+```{r}
+Beach_vs_mountain %>%
+  ggplot(aes(x = Preference)) +
+  geom_histogram(binwidth = 1, fill = "cadetblue2", color = "cadetblue") +
+  labs(
+    title = "Beach vs Mountain Preferences",
+    x = "Beaches vs. Mountains",
+    y = "Count") 
+  
+```
+
+### Description:
+ > This graph shows the distribution of preference between beaches (0) and mountains (1). It shows a strong preference overall toward beaches. This is particularly interesting due to the rest of the variables being evenly distributed for the most part. Below we will see what variables play a part in the uneven distribution we are seeing here. 
+ 
+
+```{r}
+
+Beach_vs_mountain %>%
+mutate(AgeGroup = cut_width(Age, width = 5, boundary = 0)) %>%
+  ggplot(aes(x = AgeGroup, fill = factor(Preference))) +
+  geom_bar(position = "stack", color = "darkgreen") +
+  labs(
+    title = "Beach vs Mountain Preference by Age Group",
+    x = "Age Group",
+    y = "Count",
+    fill = "Preference") +
+  scale_fill_manual(values = c("cadetblue2", "lightgreen"), labels = c('Beach', 'Mountain')) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+### Graph Description:
+> This graph shows both the distribution of ages (grouped by 10) and the freqency of preference for beach (0) and mountains (1). The age groups on both ends are strange due to the min being 18 and the max being 68. We can see that the ratio of beach to mountain remains largely the same between all the age grouping. This lends to its synthetic nature since more than likely age is uniformly distributed which may not reflect real-world data. From this we can learn that the person who designed the data more than likely saw that it would be best to keep it simple and distribute age uniformly.  
+
+```{r}
+Beach_vs_mountain %>%
+  ggplot(aes(x = Preferred_Activities, fill = factor(Preference))) +
+  geom_bar(position = "stack", color = "darkgreen") +
+  labs(
+    title = "Beach vs Mountain Preference by Preferred Activity",
+    x = "Preferred Activity",
+    y = "Frequency",
+    fill = "Preference") + 
+  scale_fill_manual(values = c("cadetblue2", "lightgreen"), labels = c("Beach", "Mountain")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+### Graph Description:
+> This graph shows Travel Frequency by Income colored by location type. It tells us that travel frequency is equally distributed between income levels as well as the fact that each location type is equally distributed as well. This is one of the many clues that shows us that the dataset is synthetic. More than likely if this dataset were to reflect real data then it would end up with more people living in urban areas as well as income differing by location type. for example in some urban centers the cost of living may be higher than rural areas which would affect the distribution of income by location. Ordinarily we also may see an increase in travel frequency as the income level increases since it requires money to travel.
+
+```{r}
+Beach_vs_mountain %>%
+mutate(ProximitytoMountainsCut = cut_width(Proximity_to_Mountains, width = 50, boundary = 0)) %>%
+  ggplot(aes(x = ProximitytoMountainsCut, fill = factor(Preference))) +
+  geom_bar(position = "stack", color = "darkgreen") +
+  labs(
+    title = "Proximity to Mountains Colored by Preference",
+    x = "Proximity to Mountains",
+    y = "Count",
+  fill = "Preference") + 
+  scale_fill_manual(values = c("cadetblue2", "lightgreen"), labels = c("Beach", "Mountain")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+### Graph Description:
+> This shows the distribution of proximity to mountains by preference. Here we can see that as people get further from the mountians they are more likely to prefer the beach. This is important because it shows that proximity to each location does play a factor in the choice between the beach and mountains. It also shows that there is an equal distribution between each proximity.
+
+
+```{r}
+#Prox. to mountains by Preference colored by Location
+Beach_vs_mountain %>%
+  filter(Preference == '1') %>%
+mutate(ProximitytoMountainsCut = cut_width(Proximity_to_Mountains, width = 50, boundary = 0)) %>%
+  ggplot(aes(x = ProximitytoMountainsCut, fill = factor(Location))) +
+  geom_bar(position = "stack") +
+  labs(
+    title = "Proximity to mountains by Preference feat. Location",
+    x = "Proximity to Mountains",
+    y = "Mountain Preference count",
+    fill = "Location") +
+  scale_fill_manual(values = c("cadetblue2", "cadetblue3", "cadetblue")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+### Graph Description
+> This graph shows the count of people who prefer the mountains and their proximity to the mountains colored by location type. This tells us that people prefer mountains the closer they are to the mountains. It also shows that there is an equal number of rural, suburban, and urban location for each distance from mountains. This is important because if this dataset was not synthetic we would more than likely have more urban areas not directly in the mountains. This is because it is difficult to create large urban centers in mountain areas leading to more rural locations
+
+
+```{r}
+#Graph that shows the relationship between preferred activity proximity and preferred activity colored by preference
+
+#Proximity to mountains by Preference colored by Location
+Beach_vs_mountain %>%
+  filter(Preference == '0') %>%
+mutate(ProximitytoMountainsCut = cut_width(Proximity_to_Mountains, width = 50, boundary = 0)) %>%
+  ggplot(aes(x = ProximitytoMountainsCut, fill = factor(Preferred_Activities))) +
+  geom_bar(position = "stack") +
+  labs(
+    title = "Proximity to Mountains by Beach Preference feat. Preferred Activities",
+    x = "Proximity to Mountains",
+    y = "Beach Preference count",
+    fill = "Preferred Activities") +
+  scale_fill_manual(values = c("green3", "green4", 'cadetblue2', 'cadetblue3')) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+### Description
+> This shows the relationship between Proximity to mountains and preferrence towards the beach colored by preferred activity. This shows that the futher away from the beach a person lives the more likely they are to prefer hiking or skiing with an equal spread of sunbathing and swimming between all proximities. It also shows that the closer someone lives  to each respective destination the more likely they are to prefer it.
+
+```{r}
+#Graph that shows the relationship between preferred activity proximity and preferred activity colored by preference
+
+#Proximity to mountains by Preference colored by Location
+Beach_vs_mountain %>%
+  filter(Preference == '0') %>%
+mutate(ProximitytoMountainsCut = cut_width(Proximity_to_Mountains, width = 50, boundary = 0)) %>%
+  ggplot(aes(x = ProximitytoMountainsCut, fill = factor(Preferred_Activities))) +
+  geom_bar(position = "stack") +
+  labs(
+    title = "Proximity to Mountains by Beach Preference feat. Preferred Activities",
+    x = "Proximity to Mountains",
+    y = "Beach Preference count",
+    fill = "Preferred Activities") +
+  scale_fill_manual(values = c("green3", "green4", 'cadetblue2', 'cadetblue3')) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+```{r}
+Beach_vs_mountain %>%
+  ggplot(aes(x = Environmental_Concerns, fill = factor(Preference))) +
+  geom_bar(position = "stack", color = "darkgreen") +
+  labs(
+    title = "Beach vs Mountain Preference by Environmental Concerns",
+    x = "Environmental Concerns: 0 = NO, 1 = YES",
+    y = "Frequency",
+    fill = "Preference") + 
+  scale_fill_manual(values = c("cadetblue2", "lightgreen"), labels = c("Beach", "Mountain")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+### Graph Description
+> This graph shows the Frequency of environmental concerns colored by beach vs mountain preference. We can see that the split between people with environmental concerns and without is an even split. We can also see that the distribution of preference between these two is also even telling us that whether or not someone has environmental concerns does not affect their preference.
+
+
+```{r}
+Beach_vs_mountain %>%
+  ggplot(aes(x = Pets, fill = factor(Preference))) +
+  geom_bar(position = "stack", color = "darkgreen") +
+  labs(
+    title = "Beach vs Mountain Preference by Pet Ownership",
+    x = "Pets: 0 = NO, 1 = YES",
+    y = "Frequency",
+    fill = "Preference") + 
+  scale_fill_manual(values = c("cadetblue2", "lightgreen"), labels = c("Beach", "Mountain")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+### Graph Description
+> This graph shows the Frequency of pet ownership colored by beach vs mountain preference. We can see that the split between people with and without pets is an even split. We can also see that the distribution of preference between these two is also even telling us that whether or not someone has pets does not affect their preference. 
+
+
+```{r}
+Beach_vs_mountain %>%
+  ggplot(aes(x = Gender, fill = factor(Preference))) +
+  geom_bar(position = "stack", color = "darkgreen") +
+  labs(
+    title = "Beach vs Mountain Preference by Gender",
+    x = "Gender",
+    y = "Frequency",
+    fill = "Preference") + 
+  scale_fill_manual(values = c("cadetblue2", "lightgreen"), labels = c("Beach", "Mountain")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+### Graph Description
+> This graphs shows preference by gender. We can see that there is a uniform distribution between each gender. We can also see that there is not any difference between genders that affects the decision between the beach and mountains.
+
+
+```{r}
+Beach_vs_mountain %>%
+  ggplot(aes(x = Education_Level, fill = factor(Preference))) +
+  geom_bar(position = "stack", color = "darkgreen") +
+  labs(
+    title = "Beach vs Mountain Preference by Education Level",
+    x = "Education Level",
+    y = "Frequency",
+    fill = "Preference") + 
+  scale_fill_manual(values = c("cadetblue2", "lightgreen"), labels = c("Beach", "Mountain")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+### Graph Description
+> This graph shows the frequency of each education level colored by beach vs mountain preference. We can see that there is an equal amount of people in each category. This is interesting because if this dataset were to reflect the real world then there would be a much more pronounced difference between the number of people with a highschool education and even bachelor to those with a doctorate. More than likely we would see the number of people dwindle as the difficulty of obtaining the respective education level increases. We can also see that the distribution of preference between these two is also even telling us that whether or not someone has a certain level of education does not affect their preference. 
+
+
+```{r}
+Beach_vs_mountain %>%
+  ggplot(aes(x = Location, fill = factor(Preference))) +
+  geom_bar(position = "stack", color = "darkgreen") +
+  labs(
+    title = "Beach vs Mountain Preference by Location",
+    x = "Location",
+    y = "Frequency",
+    fill = "Preference") + 
+  scale_fill_manual(values = c("cadetblue2", "lightgreen"), labels = c("Beach", "Mountain")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+### Graph Description
+> This graph shows the Frequency of location colored by beach vs mountain preference. We can see that the split between people who live in each respective location type is an even split. We can also see that the distribution of preference between these three is also even telling us that whether or not someone lives in a certain location does not affect their preference. This is interesting because it is unlikely that there would be an even split between location types if the dataset reflected real-world conditions. This is because though the US is quite spread out many people are still concentrated in urban and suburban areas which would lead to a lower percentage of people living in rural areas. 
+
+
+```{r}
+Beach_vs_mountain %>%
+  ggplot(aes(x = Favorite_Season, fill = factor(Preference))) +
+  geom_bar(position = "stack", color = "darkgreen") +
+  labs(
+    title = "Beach vs Mountain Preference by Favorite Season",
+    x = "Favorite Season",
+    y = "Frequency",
+    fill = "Preference") + 
+  scale_fill_manual(values = c("cadetblue2", "lightgreen"), labels = c("Beach", "Mountain")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+### Graph Description
+> This graph shows the Frequency of favorite season colored by beach vs mountain preference. We can see that the split between people who preffer each respective season is evenly split. We can also see that the distribution of preference between these three is also even telling us that whether or not prefers a certain season does not affect their preference. This is interesting because it is likely that there would be an even split between location types if the dataset reflected real-world conditions. This is because though the US is quite spread out many people are still concentrated in urban and suburban areas which would lead to a lower percentage of people living in rural areas. 
+
+
+## Correlation Matrix
+```{r}
+mixed_corr <- correlation(Beach_vs_mountain)
+summary(mixed_corr)
+```
+
+### Correlation Matrix Description
+> Here we can see that many of the variables have no correlation with one another which is due to the fact that the data is synthetic. This is because many have a correlation of 0 telling us that they are not correlated at all. This is especially apparent considering income is not correlated with vacation budget or travel frequency. This is surprising since traveling often requires a good deal of funds for things like accommodations, food, and transportation. We can see that with the variables that are included the ones with the most correlation are the two relating to proximity. Proximity to mountains has a -0.34 correlation telling us that as the distance from the mountains increases the preference towards the mountains will decrease. The opposite is true for the proximity to beaches column which has a positive correlation of 0.33 which tells us that as the distance from the beach increases so does the preference towards the mountains. This makes sense particularly because the proximity to the mountains and the proximity to the beach columns seem to be related we can see that as the distance from the mountains increases the distance from the mountains decreases and vice versa.
+
+
+# Results
+> To analyze the data I created a series of graphs often colored by preference to try and find variables that have an unequal distribution between preference towards the beach vs mountains. I used this method in particular because it allowed me to differentiate the frequency of one choice over another as part of each respective range/category. This is especially helpful considering most of the variables are uniformly distributed which did not allow me to find many differences just by looking at the frequency. After finding that only people who prefer skiing and hiking have a 50% split between the mountains and the beach in each respective category I also found that the amount of people who prefer mountains increases the closer they live to the mountains. I then combined these two pieces of important information into the "Proximity to Mountains by Beach Preference feat. Preferred Activities" graph which showed that no matter the distance from the beach there is an equal amount that prefers the beach regardless with there being a completely equal split between each of the activities for those who live between 0-50mi from the mountains. From this information I found that most likely when creating the dataset the designer likely specified this information since it is unlikely this would occur in a dataset with real data. 
+
+
+# Conclusions
+> My main goal was to find what varibles would influence the preference between the beach vs. the mountains. This dataset is synthesized in a way that the preference in mainly dependent on the preferred activity and proximity to either location where only people who prefer hiking and skiing prefer the mountians. The data also shows that the amount of people who prefer the mountains increases the closer they are to the mountains. One of the main limitations of my study of this dataset is that it is synthetic which means we cannot get any insights that would apply in practice. In the future it would be wise to look more into if any other variables affect the two that we have found to affect the preference so far however, the correlation matrix shows there to not be much  correlation between other variables. 
+
+
+# References
+> Paliwal, J. (Updated 2024). _Mountains vs. Beach Preference_ [Data set]. Kaggle. https://www.kaggle.com/datasets/jahnavipaliwal/mountains-vs-beaches-preference
+
